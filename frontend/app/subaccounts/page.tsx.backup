@@ -1,0 +1,616 @@
+"use client";
+
+import { useEffect, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import {
+  createSubaccount,
+  deleteSubaccount,
+  fetchCurrentUser,
+  fetchSubaccountStatus,
+  updateSubaccount,
+} from "@/lib/api";
+import {
+  Subaccount,
+} from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Header } from "@/components/header";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { AlertCircle, Plus, X } from "lucide-react";
+import { useData } from "@/lib/data-provider";
+
+type Banner = { kind: "error" | "success"; message: string } | null;
+
+export default function SubaccountsPage() {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  // Use shared data provider
+  const { subaccounts, markets, isLoading: sharedDataLoading } = useData();
+
+  const subaccountsLoading = sharedDataLoading;
+
+  const {
+    data: currentUser,
+    error: currentUserError,
+  } = useQuery({ queryKey: ["current-user"], queryFn: fetchCurrentUser, retry: false });
+
+  const [subaccountForm, setSubaccountForm] = useState({
+    address: "",
+    subaccountNumber: 0,
+    nickname: "",
+    threshold: 10,
+  });
+
+  const [banner, setBanner] = useState<Banner>(null);
+  const [globalBanner, setGlobalBanner] = useState<Banner>(null);
+  const [showAddForm, setShowAddForm] = useState(false);
+
+  useEffect(() => {
+    if (!currentUserError) return;
+    setGlobalBanner((prev) => {
+      if (prev?.message === "Authentication expired. Please sign in again.") {
+        return prev;
+      }
+      return { kind: "error", message: "Authentication expired. Please sign in again." };
+    });
+  }, [currentUserError]);
+
+  const createSubaccountMutation = useMutation({
+    mutationFn: createSubaccount,
+    onSuccess: () => {
+      setBanner({ kind: "success", message: "Subaccount added." });
+      queryClient.invalidateQueries({ queryKey: ["subaccounts"] });
+      setSubaccountForm({ address: "", subaccountNumber: 0, nickname: "", threshold: 10 });
+      setShowAddForm(false);
+    },
+    onError: (error: Error) =>
+      setBanner({ kind: "error", message: error.message }),
+  });
+
+  const updateSubaccountMutation = useMutation({
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: Parameters<typeof updateSubaccount>[1];
+    }) => updateSubaccount(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subaccounts"] });
+      setBanner({ kind: "success", message: "Subaccount updated." });
+    },
+    onError: (error: Error) =>
+      setBanner({ kind: "error", message: error.message }),
+  });
+
+  const deleteSubaccountMutation = useMutation({
+    mutationFn: deleteSubaccount,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["subaccounts"] });
+      setBanner({ kind: "success", message: "Subaccount removed." });
+    },
+    onError: (error: Error) =>
+      setBanner({ kind: "error", message: error.message }),
+  });
+
+  const handleCreateSubaccount = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setBanner(null);
+    createSubaccountMutation.mutate({
+      address: subaccountForm.address.trim(),
+      subaccount_number: Number(subaccountForm.subaccountNumber) || 0,
+      nickname: subaccountForm.nickname.trim() || null,
+      liquidation_threshold_percent: Number(subaccountForm.threshold) || 0,
+    });
+  };
+
+  const handleLogout = async () => {
+    setGlobalBanner(null);
+    try {
+      await fetch("/api/session/logout", { method: "POST", credentials: "include" });
+    } catch (error) {
+      setGlobalBanner({ kind: "error", message: "Failed to log out." });
+      return;
+    }
+    router.push("/login");
+    router.refresh();
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header user={currentUser} onLogout={handleLogout} />
+
+      <main className="flex-1 p-4 md:p-6 space-y-4 overflow-auto max-w-7xl w-full mx-auto">
+          {/* Header */}
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-lg font-semibold">Subaccounts</h1>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Monitor liquidation risks for your dYdX positions
+              </p>
+            </div>
+            <Button size="sm" onClick={() => setShowAddForm(!showAddForm)}>
+              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              Add
+            </Button>
+          </div>
+
+          {globalBanner && (
+            <div className={`rounded-md px-3 py-2 flex items-center gap-2 text-xs ${globalBanner.kind === "error" ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}>
+              <AlertCircle className="h-3.5 w-3.5" />
+              <p>{globalBanner.message}</p>
+            </div>
+          )}
+
+          {banner && (
+            <div className={`rounded-md px-3 py-2 flex items-center gap-2 text-xs ${banner.kind === "error" ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success"}`}>
+              <AlertCircle className="h-3.5 w-3.5" />
+              <p>{banner.message}</p>
+            </div>
+          )}
+
+          {/* Add Form */}
+          {showAddForm && (
+            <Card>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-sm font-medium">Add Subaccount</h2>
+                  <Button variant="ghost" size="sm" onClick={() => setShowAddForm(false)}>
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+                <form onSubmit={handleCreateSubaccount} className="space-y-3">
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="address" className="text-xs">Address *</Label>
+                      <Input
+                        id="address"
+                        required
+                        value={subaccountForm.address}
+                        onChange={(event) =>
+                          setSubaccountForm((prev) => ({ ...prev, address: event.target.value }))
+                        }
+                        placeholder="dydx1..."
+                        className="text-xs h-8"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="subaccountNumber" className="text-xs">Subaccount Number</Label>
+                      <Input
+                        id="subaccountNumber"
+                        type="number"
+                        min={0}
+                        value={subaccountForm.subaccountNumber}
+                        onChange={(event) =>
+                          setSubaccountForm((prev) => ({
+                            ...prev,
+                            subaccountNumber: Number(event.target.value),
+                          }))
+                        }
+                        className="text-xs h-8"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="nickname" className="text-xs">Nickname</Label>
+                      <Input
+                        id="nickname"
+                        value={subaccountForm.nickname}
+                        onChange={(event) =>
+                          setSubaccountForm((prev) => ({ ...prev, nickname: event.target.value }))
+                        }
+                        placeholder="My Account"
+                        className="text-xs h-8"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="threshold" className="text-xs">Alert Threshold (%)</Label>
+                      <Input
+                        id="threshold"
+                        type="number"
+                        min={0}
+                        value={subaccountForm.threshold}
+                        onChange={(event) =>
+                          setSubaccountForm((prev) => ({
+                            ...prev,
+                            threshold: Number(event.target.value),
+                          }))
+                        }
+                        className="text-xs h-8"
+                      />
+                    </div>
+                  </div>
+                  <Button type="submit" size="sm" disabled={createSubaccountMutation.isPending}>
+                    Add Subaccount
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Subaccounts List */}
+          {subaccountsLoading ? (
+            <div className="text-center py-12 text-xs text-muted-foreground">
+              Loading...
+            </div>
+          ) : subaccounts.length === 0 ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <p className="text-xs text-muted-foreground mb-3 text-center max-w-sm">
+                  No subaccounts yet. Add your first one to start monitoring.
+                </p>
+                <Button size="sm" onClick={() => setShowAddForm(true)}>
+                  <Plus className="h-3.5 w-3.5 mr-1.5" />
+                  Add Subaccount
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {subaccounts.map((subaccount) => (
+                <SubaccountCard
+                  key={subaccount.id}
+                  subaccount={subaccount}
+                  onDelete={() => deleteSubaccountMutation.mutate(subaccount.id)}
+                  onUpdate={(payload) =>
+                    updateSubaccountMutation.mutate({ id: subaccount.id, payload })
+                  }
+                  isProcessing={
+                    deleteSubaccountMutation.isPending || updateSubaccountMutation.isPending
+                  }
+                />
+              ))}
+            </div>
+          )}
+        </main>
+    </div>
+  );
+}
+
+type SubaccountCardProps = {
+  subaccount: Subaccount;
+  onDelete: () => void;
+  onUpdate: (
+    payload: Partial<Pick<Subaccount, "nickname" | "liquidation_threshold_percent" | "is_active">>
+  ) => void;
+  isProcessing: boolean;
+};
+
+function SubaccountCard({
+  subaccount,
+  onDelete,
+  onUpdate,
+  isProcessing,
+}: SubaccountCardProps) {
+  // Get markets from shared data provider
+  const { markets: marketsData } = useData();
+  const markets = useMemo(() => {
+    if (!marketsData || Object.keys(marketsData).length === 0) return null;
+    return { markets: marketsData };
+  }, [marketsData]);
+
+  const { data: status, isLoading: statusLoading } = useQuery({
+    queryKey: ["subaccount-status", subaccount.id],
+    queryFn: () => fetchSubaccountStatus(subaccount.id),
+    staleTime: 10_000,
+    refetchInterval: 15_000,
+  });
+
+  const [nickname, setNickname] = useState(subaccount.nickname ?? "");
+  const [threshold, setThreshold] = useState(
+    subaccount.liquidation_threshold_percent.toString()
+  );
+  const [isActive, setIsActive] = useState(subaccount.is_active);
+  const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    setNickname(subaccount.nickname ?? "");
+    setThreshold(subaccount.liquidation_threshold_percent.toString());
+    setIsActive(subaccount.is_active);
+  }, [subaccount]);
+
+  const metrics = status?.metrics;
+  const statusBadge = status?.status?.toLowerCase() ?? "unknown";
+
+  const handleSave = () => {
+    onUpdate({
+      nickname: nickname.trim() || null,
+      liquidation_threshold_percent: Number(threshold) || 0,
+      is_active: isActive,
+    });
+    setIsEditing(false);
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        {/* Header */}
+        <div className="flex items-start justify-between">
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">{nickname || subaccount.nickname || "Unnamed"}</p>
+            <p className="text-xs text-muted-foreground font-mono truncate">
+              {subaccount.address} #{subaccount.subaccount_number}
+            </p>
+          </div>
+          <Badge variant={statusBadge === "safe" ? "success" : statusBadge === "warning" ? "warning" : statusBadge === "critical" ? "destructive" : "secondary"}>
+            {statusBadge}
+          </Badge>
+        </div>
+
+        {/* Metrics */}
+        <div className="space-y-3 py-3 border-y border-border">
+          {statusLoading ? (
+            <div className="text-center py-2 text-xs text-muted-foreground">Loading metrics...</div>
+          ) : status && metrics ? (
+            <>
+              {/* Account Metrics */}
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-muted-foreground">Account Metrics</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Metric label="Equity" value={formatCurrency(metrics.equity)} />
+                  <Metric label="Free Collateral" value={formatCurrency(metrics.free_collateral)} />
+                  <Metric label="Initial Req." value={formatCurrency(metrics.initial_requirement)} />
+                  <Metric label="Maintenance Req." value={formatCurrency(metrics.maintenance_requirement)} />
+                  <Metric label="Margin Ratio" value={formatMetric(metrics.margin_ratio, "x")} />
+                  <Metric label="Liq. Distance" value={formatMetric(metrics.liquidation_distance_percent, "%")} />
+                  <Metric label="Initial Margin" value={metrics.initial_margin_percent != null ? `${metrics.initial_margin_percent.toFixed(2)}%` : "—"} />
+                  <Metric label="Maintenance Margin" value={metrics.maintenance_margin_percent != null ? `${metrics.maintenance_margin_percent.toFixed(2)}%` : "—"} />
+                </div>
+              </div>
+
+              {/* Positions */}
+              {metrics.position_metrics && Object.keys(metrics.position_metrics).length > 0 && (
+                <div className="space-y-2 pt-2 border-t border-border">
+                  <p className="text-xs font-medium text-muted-foreground">Open Positions</p>
+                  <div className="space-y-2">
+                    {Object.entries(metrics.position_metrics).map(([market, posMetrics]: [string, any]) => {
+                      const rawPosition = metrics.positions?.[market] ?? {};
+                      const marketData = markets?.markets?.[market];
+
+                      const size = parseNumber(rawPosition.size) ?? posMetrics?.size ?? 0;
+                      const entryPrice = parseNumber(rawPosition.entryPrice) ?? posMetrics?.entry_price ?? 0;
+
+                      // Use oracle price from position metrics first (already calculated by backend with correct price)
+                      const oraclePrice = posMetrics?.oracle_price
+                        ?? parseNumber(rawPosition.oraclePrice)
+                        ?? parseNumber(marketData?.oraclePrice)
+                        ?? entryPrice;
+
+                      // Position value should use oracle price * size
+                      const positionValue = posMetrics?.position_value
+                        ?? parseNumber(rawPosition.positionValue)
+                        ?? parseNumber(rawPosition.openNotional)
+                        ?? (oraclePrice && size ? Math.abs(size) * oraclePrice : undefined);
+                      const marginMode = (rawPosition.marginMode || posMetrics?.margin_mode || "cross").toString().toUpperCase();
+                      const side = size >= 0 ? "LONG" : "SHORT";
+                      const maintenancePercent = parseNumber(rawPosition.maintenanceMarginFraction) !== undefined
+                        ? parseNumber(rawPosition.maintenanceMarginFraction)! * 100
+                        : posMetrics?.maintenance_margin_percent ?? (posMetrics?.maintenance_margin_fraction ? posMetrics.maintenance_margin_fraction * 100 : undefined);
+                      const initialPercent = parseNumber(rawPosition.initialMarginFraction) !== undefined
+                        ? parseNumber(rawPosition.initialMarginFraction)! * 100
+                        : posMetrics?.initial_margin_percent ?? (posMetrics?.initial_margin_fraction ? posMetrics.initial_margin_fraction * 100 : undefined);
+                      const initialUsed = parseNumber(rawPosition.initialMarginRequirement)
+                        ?? posMetrics?.initial_requirement
+                        ?? (positionValue !== undefined && initialPercent !== undefined ? (positionValue * (initialPercent / 100)) : undefined);
+                      const maintenanceUsed = parseNumber(rawPosition.maintenanceMarginRequirement)
+                        ?? posMetrics?.maintenance_requirement
+                        ?? (positionValue !== undefined && maintenancePercent !== undefined ? (positionValue * (maintenancePercent / 100)) : undefined);
+                      // Leverage: dYdX uses position_value / equity, NOT 1/IMF
+                      const leverage = parseNumber(rawPosition.leverage)
+                        ?? posMetrics?.leverage_on_equity;
+
+                      // Use unrealized PnL from API (already calculated correctly by dYdX)
+                      const unrealizedPnl = parseNumber(rawPosition.unrealizedPnl) ?? posMetrics?.unrealized_pnl;
+
+                      // Calculate PnL percentage: dYdX uses unrealized PnL / equity, NOT / cost basis
+                      const pnlPercent = unrealizedPnl !== undefined && metrics.equity && metrics.equity > 0
+                        ? (unrealizedPnl / metrics.equity) * 100
+                        : undefined;
+
+                      const funding = parseNumber(rawPosition.netFunding) ?? posMetrics?.funding_payment;
+                      const realizedPnl = parseNumber(rawPosition.realizedPnl) ?? posMetrics?.realized_pnl ?? 0;
+
+                      return (
+                        <div key={market} className="bg-muted/30 rounded-lg p-3 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold">{market}</span>
+                              <Badge variant={side === "LONG" ? "success" : "destructive"} className="text-xs">
+                                {side}
+                              </Badge>
+                              <Badge variant="outline" className="text-xs uppercase tracking-wide">
+                                {marginMode}
+                              </Badge>
+                            </div>
+                            <div className="text-right">
+                              <p className={`text-sm font-semibold ${unrealizedPnl != null && unrealizedPnl >= 0 ? 'text-success' : 'text-destructive'}`}>
+                                {unrealizedPnl != null ? (
+                                  <>
+                                    {unrealizedPnl >= 0 ? '+' : '−'}${Math.abs(unrealizedPnl).toFixed(2)}
+                                    {pnlPercent != null && (
+                                      <span className="text-xs ml-1">
+                                        ({pnlPercent >= 0 ? '+' : ''}{pnlPercent.toFixed(0)}%)
+                                      </span>
+                                    )}
+                                  </>
+                                ) : '—'}
+                              </p>
+                              <p className="text-xs text-muted-foreground">Unrealized PnL</p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                            <div>
+                              <p className="text-muted-foreground">Leverage</p>
+                              <p className="font-medium">{leverage ? `${leverage.toFixed(2)}×` : '—'}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Size</p>
+                              <p className="font-medium">{formatNumber(size, 3)}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Value</p>
+                              <p className="font-medium">{formatCurrency(positionValue)}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Margin Used</p>
+                              <p className="font-medium">
+                                {formatCurrency(initialUsed)}
+                                {initialPercent != null ? ` (${initialPercent.toFixed(2)}%)` : ""}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                            <div>
+                              <p className="text-muted-foreground">Avg. Open</p>
+                              <p className="font-medium">{formatCurrency(entryPrice)}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Oracle</p>
+                              <p className="font-medium">{formatCurrency(oraclePrice)}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Initial Margin</p>
+                              <p className="font-medium">{initialPercent != null ? `${initialPercent.toFixed(2)}%` : '—'}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Funding</p>
+                              <p className="font-medium">{funding != null ? `${funding >= 0 ? '+' : ''}$${Math.abs(funding).toFixed(2)}` : '—'}</p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs pt-2 border-t border-border/50">
+                            <div>
+                              <p className="text-muted-foreground">Isolated Liq.</p>
+                              <p className="font-medium">{formatCurrency(posMetrics?.isolated_liquidation_price)}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Cross Liq.</p>
+                              <p className="font-medium">{formatCurrency(posMetrics?.cross_liquidation_price)}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Protocol Liq.</p>
+                              <p className="font-medium">{formatCurrency(posMetrics?.protocol_liquidation_price)}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground">Realized PnL</p>
+                              <p className="font-medium">{`${realizedPnl >= 0 ? '+' : ''}$${Math.abs(realizedPnl).toFixed(2)}`}</p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-center py-2 text-xs text-muted-foreground">No metrics available</div>
+          )}
+        </div>
+
+        {/* Edit Form */}
+        {isEditing ? (
+          <div className="space-y-2 pt-2">
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor={`nickname-${subaccount.id}`} className="text-xs">Nickname</Label>
+                <Input
+                  id={`nickname-${subaccount.id}`}
+                  value={nickname}
+                  onChange={(e) => setNickname(e.target.value)}
+                  className="text-xs h-7"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor={`threshold-${subaccount.id}`} className="text-xs">Threshold (%)</Label>
+                <Input
+                  id={`threshold-${subaccount.id}`}
+                  type="number"
+                  min={0}
+                  value={threshold}
+                  onChange={(e) => setThreshold(e.target.value)}
+                  className="text-xs h-7"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id={`active-${subaccount.id}`}
+                  checked={isActive}
+                  onCheckedChange={setIsActive}
+                />
+                <Label htmlFor={`active-${subaccount.id}`} className="text-xs">
+                  {isActive ? "Active" : "Paused"}
+                </Label>
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
+                  Cancel
+                </Button>
+                <Button size="sm" onClick={handleSave} disabled={isProcessing}>
+                  Save
+                </Button>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            <Button size="sm" variant="outline" onClick={() => setIsEditing(true)} className="flex-1">
+              Edit
+            </Button>
+            <Button size="sm" variant="destructive" onClick={onDelete} disabled={isProcessing}>
+              Delete
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm font-medium">{value}</p>
+    </div>
+  );
+}
+
+function formatMetric(value?: number | string, suffix = "") {
+  if (value === undefined || value === null) return "—";
+  const numeric = typeof value === "string" ? Number(value) : value;
+  if (Number.isNaN(numeric)) return "—";
+  if (!Number.isFinite(numeric)) return "∞";
+  return `${numeric.toFixed(2)}${suffix}`;
+}
+
+function parseNumber(value?: number | string | null) {
+  if (value === undefined || value === null) return undefined;
+  const numeric = typeof value === "string" ? Number(value) : value;
+  if (Number.isNaN(numeric)) return undefined;
+  return numeric;
+}
+
+function formatCurrency(value?: number | string | null) {
+  const numeric = parseNumber(value);
+  if (numeric === undefined) return "—";
+  return `$${numeric.toFixed(2)}`;
+}
+
+function formatNumber(value?: number | string | null, decimals = 4) {
+  const numeric = parseNumber(value);
+  if (numeric === undefined) return "—";
+  return numeric.toFixed(decimals);
+}

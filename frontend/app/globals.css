@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Soft pastel light theme */
+    --background: 240 20% 96%;
+    --foreground: 240 8% 20%;
+
+    --card: 240 15% 98%;
+    --card-foreground: 240 8% 20%;
+
+    --popover: 240 15% 98%;
+    --popover-foreground: 240 8% 20%;
+
+    --primary: 250 60% 65%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 10% 92%;
+    --secondary-foreground: 240 8% 20%;
+
+    --muted: 240 10% 92%;
+    --muted-foreground: 240 5% 45%;
+
+    --accent: 250 60% 65%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 50% 70%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 40% 60%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 55% 65%;
+    --warning-foreground: 0 0% 100%;
+
+    --border: 240 10% 88%;
+    --input: 240 10% 94%;
+    --ring: 250 60% 65%;
+
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Modern sleek pastel color scheme */
+    --background: 240 8% 10%;
+    --foreground: 240 5% 84%;
+
+    --card: 240 6% 13%;
+    --card-foreground: 240 5% 84%;
+
+    --popover: 240 6% 13%;
+    --popover-foreground: 240 5% 84%;
+
+    --primary: 250 55% 70%;
+    --primary-foreground: 240 8% 10%;
+
+    --secondary: 240 4% 16%;
+    --secondary-foreground: 240 5% 84%;
+
+    --muted: 240 4% 20%;
+    --muted-foreground: 240 4% 50%;
+
+    --accent: 250 55% 70%;
+    --accent-foreground: 240 8% 10%;
+
+    --destructive: 0 45% 68%;
+    --destructive-foreground: 240 8% 10%;
+
+    --success: 142 40% 65%;
+    --success-foreground: 240 8% 10%;
+
+    --warning: 38 50% 65%;
+    --warning-foreground: 240 8% 10%;
+
+    --border: 240 4% 18%;
+    --input: 240 4% 16%;
+    --ring: 250 55% 70%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  .dark body {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+
+  .light body {
+    background-image:
+      linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+    background-size: 32px 32px;
+  }
+}

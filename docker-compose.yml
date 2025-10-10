@@ -1,0 +1,22 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    ports:
+      - "8021:8021"
+    env_file:
+      - .env.docker
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+    ports:
+      - "8022:8022"
+    env_file:
+      - .env.docker
+    depends_on:
+      - backend
+    restart: unless-stopped
