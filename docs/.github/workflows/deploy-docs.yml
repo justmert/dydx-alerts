@@ -1,12 +1,14 @@
 name: Deploy Documentation
 
+# DISABLED: This workflow is currently disabled because it needs proper Netlify site setup
+# To enable: Set NETLIFY_SITE_ID secret to the docs site ID (not frontend site ID)
 on:
-  push:
-    branches: [ master, main ]
-    paths:
-      - 'docs/**'
-      - '.github/workflows/deploy-docs.yml'
   workflow_dispatch:
+  # push:
+  #   branches: [ master, main ]
+  #   paths:
+  #     - 'docs/**'
+  #     - '.github/workflows/deploy-docs.yml'
 
 jobs:
   deploy:
