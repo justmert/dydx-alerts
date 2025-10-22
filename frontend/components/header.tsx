@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Activity, LogOut, Bell, AlertCircle, Users, TrendingUp, BellRing, Settings } from "lucide-react"
+import { Activity, LogOut, Bell, AlertCircle, Users, TrendingUp, BellRing, Settings, Github, BookOpen } from "lucide-react"
 import { ThemeToggle } from "./theme-toggle"
 import { Button } from "./ui/button"
 import {
@@ -68,6 +68,38 @@ export function Header({ user, onLogout }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            asChild
+          >
+            <a
+              href="https://docs.alertsdydx.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Documentation"
+            >
+              <BookOpen className="h-4 w-4" />
+            </a>
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+            asChild
+          >
+            <a
+              href="https://github.com/justmert/dydx-alerts"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="GitHub repository"
+            >
+              <Github className="h-4 w-4" />
+            </a>
+          </Button>
+
           <ThemeToggle />
 
           {user && (
