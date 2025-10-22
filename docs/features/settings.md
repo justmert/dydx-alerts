@@ -1,6 +1,6 @@
 # Settings
 
-Configure your account preferences and personalize your experience with the dYdX Alert System.
+Configure your account preferences for the dYdX Alert System.
 
 ## Timezone Settings
 
@@ -26,45 +26,24 @@ Your timezone setting applies to:
 The current time in your selected timezone is displayed below the dropdown to help you verify your selection.
 :::
 
-## Account Connections
-
-Manage how you sign in to the dYdX Alert System.
-
-### Email Sign-In
-If you registered with email, you can view and update your email address. Email verification may be required after changes.
-
-### OAuth Providers
-Connect additional authentication methods:
-- **GitHub**: Link your GitHub account for quick sign-in
-- **Google**: Connect Google for authentication (coming soon)
-
-### Linking Additional Providers
-
-1. Click **"Connect"** next to the desired provider
-2. Authorize the connection
-3. Provider will appear as "Connected"
-4. Use any connected method to sign in
-
 ## Display Preferences
-
-Customize how information is displayed:
 
 ### Theme
 Switch between light and dark themes using the theme toggle in the header. Your preference is saved automatically.
 
 ### Currency Display
-Currently, all values are displayed in USD. Additional currency support coming soon.
+Currently, all values are displayed in USD.
 
 ## Data & Privacy
 
 ### What Data We Store
 
-- **Account Info**: Email and authentication tokens
+- **Account Info**: Email and authentication tokens (managed by Supabase)
 - **Subaccounts**: dYdX addresses and nicknames you add
 - **Alert Rules**: Your configured alert conditions
 - **Notification Channels**: Channel credentials (encrypted)
 - **Alert History**: Past alerts and their metadata
-- **Preferences**: Timezone and other settings
+- **Preferences**: Timezone setting
 
 ### What We Don't Store
 
@@ -72,34 +51,22 @@ Currently, all values are displayed in USD. Additional currency support coming s
 - Trading passwords
 - Detailed trading history beyond what's public on-chain
 
-### Data Retention
+## Managing Your Data
 
-- **Alert History**: Kept for 90 days
-- **Subaccount Data**: Until you delete the subaccount
-- **Account Data**: Until you delete your account
+### Deleting Your Data
 
-## Account Management
+You can delete your data through the application:
 
-### Exporting Data
-Export your alert history and configurations (coming soon).
-
-### Deleting Your Account
-To permanently delete your account and all associated data:
-
-1. Contact support through GitHub issues
-2. Verify your identity
-3. All data will be permanently deleted within 7 days
-
-::: danger Account Deletion
-Account deletion is permanent and cannot be undone. Export any data you want to keep before deleting your account.
-:::
+- **Subaccounts**: Delete individual subaccounts from the Subaccounts page
+- **Alert Rules**: Delete alert rules from the Alert Rules page
+- **Notification Channels**: Delete channels from the Channels page
+- **Alert History**: Clear all alerts or delete individual alerts from the Alerts page
 
 ## Security
 
 ### Best Practices
 
 - Use a strong, unique password
-- Enable two-factor authentication (coming soon)
 - Review connected OAuth providers regularly
 - Don't share your account credentials
 - Log out from shared devices
@@ -116,7 +83,6 @@ Need help or have suggestions?
 
 - **GitHub Issues**: [Report bugs or request features](https://github.com/justmert/dydx-alerts/issues)
 - **Documentation**: This documentation site
-- **Email**: Contact the developer
 
 ::: info Open Source
 This project is open source under the Business Source License 1.1. Contributions and feedback are welcome!

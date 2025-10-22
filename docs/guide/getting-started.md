@@ -4,14 +4,12 @@ Welcome to the dYdX Alert System! This guide will help you get started with moni
 
 ## Step 1: Register an Account
 
-Visit [alertsdydx.com](https://alertsdydx.com) and create an account using your email or GitHub.
+Visit [alertsdydx.com](https://alertsdydx.com) and create an account.
 
-```bash
 1. Go to alertsdydx.com
 2. Click "Sign Up"
-3. Enter your email or connect with GitHub
-4. Verify your email (if using email)
-```
+3. Sign up with your email or connect with GitHub/Google
+4. Follow the authentication prompts
 
 ## Step 2: Add Your Subaccount
 
