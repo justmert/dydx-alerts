@@ -29,12 +29,12 @@ jobs:
 
       - name: Build documentation
         working-directory: ./docs
-        run: npm run build
+        run: npm run docs:build
 
       - name: Deploy to Netlify
         uses: nwtgck/actions-netlify@v3.0
         with:
-          publish-dir: './docs/dist'
+          publish-dir: './docs/.vitepress/dist'
           production-branch: master
           github-token: ${{ secrets.GITHUB_TOKEN }}
           deploy-message: "Deploy from GitHub Actions"
