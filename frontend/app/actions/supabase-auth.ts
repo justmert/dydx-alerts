@@ -52,8 +52,8 @@ export async function githubLoginAction(): Promise<{ url?: string; error?: strin
 
     // Always use production URL for OAuth redirects to avoid deploy preview URLs
     const redirectUrl = process.env.NODE_ENV === 'production'
-      ? 'https://alertsdydx.com/login'
-      : `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:8022"}/login`;
+      ? 'https://alertsdydx.com/auth/callback'
+      : `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:8022"}/auth/callback`;
 
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: "github",
@@ -64,6 +64,10 @@ export async function githubLoginAction(): Promise<{ url?: string; error?: strin
 
     if (error) {
       return { error: error.message };
+    }
+
+    if (!data?.url) {
+      return { error: "Failed to generate OAuth URL" };
     }
 
     return { url: data.url };
