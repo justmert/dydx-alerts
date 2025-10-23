@@ -5,6 +5,9 @@ deploy-ec2.sh
 frontend-build.tar.gz
 backend/.env.backup
 backend/.env.bak
+DOCS_DEPLOYMENT.md
+docs-backup.tar.gz
+src/
 .env
 .env.production
 __pycache__/
