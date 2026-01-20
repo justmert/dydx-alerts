@@ -75,7 +75,7 @@ export function Header({ user, onLogout }: HeaderProps) {
             asChild
           >
             <a
-              href="https://docs.alertsdydx.com"
+              href="https://docs.dxalerts.app"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Documentation"

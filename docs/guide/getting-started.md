@@ -4,9 +4,9 @@ Welcome to the dYdX Alert System! This guide will help you get started with moni
 
 ## Step 1: Register an Account
 
-Visit [alertsdydx.com](https://alertsdydx.com) and create an account.
+Visit [dxalerts.app](https://dxalerts.app) and create an account.
 
-1. Go to alertsdydx.com
+1. Go to dxalerts.app
 2. Click "Sign Up"
 3. Sign up with your email or connect with GitHub/Google
 4. Follow the authentication prompts
