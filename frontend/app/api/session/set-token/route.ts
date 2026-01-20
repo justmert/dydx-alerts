@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       httpOnly: true,
       sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
-      domain: process.env.NODE_ENV === "production" ? ".alertsdydx.com" : undefined,
+      domain: process.env.NODE_ENV === "production" ? ".dxalerts.app" : undefined,
       path: "/",
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });

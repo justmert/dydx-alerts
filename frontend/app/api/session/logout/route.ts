@@ -9,7 +9,7 @@ export async function POST() {
     httpOnly: true,
     sameSite: "lax",
     secure: secureCookie,
-    domain: process.env.NODE_ENV === "production" ? ".alertsdydx.com" : undefined,
+    domain: process.env.NODE_ENV === "production" ? ".dxalerts.app" : undefined,
     expires: new Date(0),
     path: "/",
   });
